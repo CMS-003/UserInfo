@@ -1,0 +1,28 @@
+{
+  "name": "user-info",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.jsx",
+  "types": "src/index.d.ts",
+  "scripts": {},
+  "dependencies": {
+    "@linaria/core": "^7.0.0",
+    "@linaria/react": "^7.0.1",
+    "@wyw-in-js/vite": "^1.1.0",
+    "rc-dropdown": "^4.2.1",
+    "react": "^19",
+    "react-dom": "^19",
+    "valtio": "^2.3.2",
+    "vite-plugin-svgr": "^5.2.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^25.6.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.11"
+  }
+}
