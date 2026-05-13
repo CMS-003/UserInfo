@@ -49,9 +49,22 @@ const Login = styled.div`
   background-color: #999;
   white-space: nowrap;
 `
+window.addEventListener('pageshow', (event) => {
+  // event.persisted 为 true 表示页面是从 BFCache（往返缓存）中恢复的
+  const navLoading = document.getElementById('navLoading');
+  if (navLoading) {
+    navLoading.style.display = 'none';
+  }
+});
 
 function authorize(app) {
-  window.location.href = `https://jiayou.work/gw/user/sns/${app}/authorize?redirect_url=${window.location.href}`
+  const navLoading = document.getElementById('navLoading');
+  if (navLoading) {
+    navLoading.style.display = 'block';
+  }
+  setTimeout(() => {
+    window.location.href = `https://jiayou.work/gw/user/sns/${app}/authorize?redirect_url=${window.location.href}`
+  }, 200);
 }
 
 const UserInfo = ({ onLogout }) => {
