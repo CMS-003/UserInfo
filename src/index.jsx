@@ -49,7 +49,7 @@ function switchTab(mode) {
 }
 
 // 提交逻辑
-async function handleAuth(event) {
+async function handleAuth(event, cb) {
   event.preventDefault(); // 阻止表单刷新
 
   const data = {
@@ -70,11 +70,15 @@ async function handleAuth(event) {
       });
       if (err) {
         alert(err)
+      } else {
+        cb && cb('login')
       }
     } else {
       const success = await User.register(data);
       if (!success) {
         alert('注册失败')
+      } else {
+        cb && cb('register')
       }
     }
   } catch (error) {
@@ -95,7 +99,7 @@ function authorize(app) {
   }, 200);
 }
 
-const UserInfo = ({ onLogout }) => {
+const UserInfo = ({ afterLogin, afterLogout }) => {
   const state = useSnapshot(User)
   const [showLogin, setShowLogin] = useState(false)
   const [isRefreshProfile, setIsRefreshProfile] = useState(false)
@@ -122,25 +126,24 @@ const UserInfo = ({ onLogout }) => {
       })
     }
   }, [state.access_token])
-  return <div>
+  return <div style={{ display: 'flex' }}>
     {(state.isLogin && state.profile)
       ? <Dropdown
         trigger={['click']}
         overlay={<div className='cms__menu'>
           <div className='cms__menu-item'>{state.profile.nickname}</div>
           <div className='cms__menu-item' onClick={() => {
-            if (onLogout) {
-              onLogout();
+            if (afterLogout) {
+              afterLogout();
             }
             User.logout()
           }}>退出</div>
         </div>}
         animation="slide-up"
       >
-        {state.profile.avatar ? <img src={state.profile.avatar} /> : <UserRound width={30} />}
+        {state.profile.avatar ? <img src={state.profile.avatar} style={{ width: 30, height: 30, borderRadius: 30, }} /> : <UserRound width={30} />}
       </Dropdown>
       : <Dropdown
-        visible={true}
         trigger={['click']}
         overlay={<div className='cms__menu'>
           <div className='cms__menu-item cms__login-text' style={{ textAlign: 'center' }} onClick={() => setShowLogin(true)}>
@@ -193,7 +196,10 @@ const UserInfo = ({ onLogout }) => {
               </div>
 
               <button id="submitBtn" className="submit-btn" onClick={(event) => {
-                handleAuth(event)
+                handleAuth(event, (type) => {
+                  setShowLogin(false)
+                  afterLogin && type === 'login' && afterLogin()
+                })
               }}>立即登录</button>
             </form>
           </div>

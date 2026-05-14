@@ -108,6 +108,7 @@ export const User = proxy({
     try {
       const resp = await fetch(this.baseURL + '/gw/user/oauth/sign-in', {
         method: 'post',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       if (resp.status === 200) {
@@ -128,6 +129,7 @@ export const User = proxy({
     try {
       const resp = await fetch(this.baseURL + '/gw/user/oauth/sign-up', {
         method: 'post',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       if (resp.status === 200) {
