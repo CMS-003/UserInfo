@@ -13,6 +13,7 @@ try {
 
 }
 export const User = proxy({
+  baseURL: 'https://jiayou.work',
   profile,
   access_token: localStorage.getItem(KEYS.ACCESS_TOKEN) || '',
   refresh_token: localStorage.getItem(KEYS.REFRESH_TOKEN) || '',
@@ -29,7 +30,7 @@ export const User = proxy({
   },
   refreshToken(cb) {
     const that = this;
-    fetch('https://jiayou.work/gw/user/oauth/refresh', {
+    fetch(this.baseURL + '/gw/user/oauth/refresh', {
       method: 'post',
       headers: {
         Authorization: this.refresh_token
@@ -60,7 +61,7 @@ export const User = proxy({
   },
   refreshProfile(cb) {
     const that = this;
-    fetch('https://jiayou.work/gw/user/profile', {
+    fetch(this.baseURL + '/gw/user/profile', {
       method: 'get',
       headers: {
         Authorization: 'Bearer ' + this.access_token
@@ -101,5 +102,43 @@ export const User = proxy({
     this.profile = null
     this.setAccessToken('')
     this.setRefreshToken('')
+  },
+  async login(data) {
+    const that = this;
+    try {
+      const resp = await fetch(this.baseURL + '/gw/user/oauth/sign-in', {
+        method: 'post',
+        body: JSON.stringify(data),
+      });
+      if (resp.status === 200) {
+        const body = await resp.json();
+        if (body.code === 0) {
+          that.setAccessToken(body.data.access_token)
+          that.setRefreshToken(body.data.refresh_token)
+          return '';
+        }
+        return body.message;
+      }
+    } catch (err) {
+      return err.message;
+    }
+  },
+  async register() {
+    const that = this;
+    try {
+      const resp = await fetch(this.baseURL + '/gw/user/oauth/sign-up', {
+        method: 'post',
+        body: JSON.stringify(data),
+      });
+      if (resp.status === 200) {
+        const body = await resp.json();
+        if (body.code === 0) {
+          return true;
+        }
+        return false;
+      }
+    } catch (err) {
+      return false;
+    }
   }
 })

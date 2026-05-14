@@ -3,7 +3,7 @@ import Dropdown from 'rc-dropdown';
 import { useSnapshot } from 'valtio';
 import { User } from './user'
 import 'rc-dropdown/assets/index.css';
-import { styled } from '@linaria/react';
+import './index.css'
 import UserRound from './asserts/user-round.svg?react';
 import Github from './asserts/github.svg?react';
 import Google from './asserts/google.svg?react';
@@ -12,43 +12,6 @@ import Weibo from './asserts/weibo.svg?react';
 
 export { User } from './user'
 
-const Menu = styled.div`
-  padding: 5px 0;
-  background-color: white;
-  border-radius: 4px;
-  box-shadow: grey 0px 0px 3px;
-`
-const MenuItem = styled.div`
-  line-height: 1.5;
-  font-size: 12px;
-  padding: 8px 16px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 5px;
-  justify-content: flex-start;
-  &:hover {
-    cursor: pointer;
-  }
-  &.disable {
-    background-color: lightgrey;
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-`
-const Avatar = styled.img`
-  height: 30px;
-  border-radius: 50%;
-`
-const Login = styled.div`
-  padding: 3px 10px;
-  cursor: pointer;
-  font-size: 14px;
-  border-radius: 5px;
-  color: white;
-  background-color: #999;
-  white-space: nowrap;
-`
 window.addEventListener('pageshow', (event) => {
   // event.persisted 为 true 表示页面是从 BFCache（往返缓存）中恢复的
   const navLoading = document.getElementById('navLoading');
@@ -56,6 +19,71 @@ window.addEventListener('pageshow', (event) => {
     navLoading.style.display = 'none';
   }
 });
+let currentMode = 'login';
+
+// 切换 登录 / 注册 模式
+function switchTab(mode) {
+  currentMode = mode;
+  const btns = document.querySelectorAll('.tab-btn');
+  const emailGroup = document.getElementById('emailGroup');
+  const verifyGroup = document.getElementById('verifyGroup');
+  const submitBtn = document.getElementById('submitBtn');
+  const accountLabel = document.querySelector('label[for="account"]');
+
+  // 更新 Tab 样式
+  btns[0].classList.toggle('active', mode === 'login');
+  btns[1].classList.toggle('active', mode === 'register');
+
+  if (mode === 'register') {
+    emailGroup.classList.remove('hidden');
+    verifyGroup.classList.remove('hidden');
+    submitBtn.innerText = '立即注册';
+    accountLabel.innerText = '账号';
+    document.getElementById('email').required = true;
+  } else {
+    emailGroup.classList.add('hidden');
+    submitBtn.innerText = '立即登录';
+    accountLabel.innerText = '账号 / 邮箱';
+    document.getElementById('email').required = false;
+  }
+}
+
+// 提交逻辑
+async function handleAuth(event) {
+  event.preventDefault(); // 阻止表单刷新
+
+  const data = {
+    account: document.getElementById('account').value.trim(),
+    password: document.getElementById('password').value.trim(),
+    email: currentMode === 'register' ? document.getElementById('email').value.trim() : null
+  };
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.innerText = '发送中...';
+
+  try {
+    if (currentMode === 'login') {
+      const err = await User.login({
+        type: 'account',
+        account: data.account,
+        value: data.password
+      });
+      if (err) {
+        alert(err)
+      }
+    } else {
+      const success = await User.register(data);
+      if (!success) {
+        alert('注册失败')
+      }
+    }
+  } catch (error) {
+    console.log(error)
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerText = currentMode === 'login' ? '立即登录' : '立即注册';
+  }
+}
 
 function authorize(app) {
   const navLoading = document.getElementById('navLoading');
@@ -69,6 +97,7 @@ function authorize(app) {
 
 const UserInfo = ({ onLogout }) => {
   const state = useSnapshot(User)
+  const [showLogin, setShowLogin] = useState(false)
   const [isRefreshProfile, setIsRefreshProfile] = useState(false)
   const [isRefreshToken, setIsRefreshToken] = useState(false)
   useEffect(() => {
@@ -97,39 +126,80 @@ const UserInfo = ({ onLogout }) => {
     {(state.isLogin && state.profile)
       ? <Dropdown
         trigger={['click']}
-        overlay={<Menu>
-          <MenuItem>{state.profile.nickname}</MenuItem>
-          <MenuItem onClick={() => {
+        overlay={<div className='cms__menu'>
+          <div className='cms__menu-item'>{state.profile.nickname}</div>
+          <div className='cms__menu-item' onClick={() => {
             if (onLogout) {
               onLogout();
             }
             User.logout()
-          }}>退出</MenuItem>
-        </Menu>}
+          }}>退出</div>
+        </div>}
         animation="slide-up"
       >
-        {state.profile.avatar ? <Avatar src={state.profile.avatar} /> : <UserRound width={30} />}
+        {state.profile.avatar ? <img src={state.profile.avatar} /> : <UserRound width={30} />}
       </Dropdown>
       : <Dropdown
+        visible={true}
         trigger={['click']}
-        overlay={<Menu>
-          <MenuItem onClick={() => authorize('google')}><Google style={{ height: 15 }} />google</MenuItem>
-          <MenuItem onClick={() => authorize('alipay')}><Alipay style={{ height: 16 }} />支付宝</MenuItem>
-          <MenuItem onClick={() => {
-            authorize('github')
-          }}><Github style={{ height: 16 }} />github</MenuItem>
-          <MenuItem className="disable" onClick={() => {
+        overlay={<div className='cms__menu'>
+          <div className='cms__menu-item cms__login-text' style={{ textAlign: 'center' }} onClick={() => setShowLogin(true)}>
+            <span>登录/注册</span>
+          </div>
+          <div className='cms__menu-item' onClick={() => authorize('google')}><Google style={{ height: 15 }} />google</div>
+          <div className='cms__menu-item' onClick={() => authorize('alipay')}><Alipay style={{ height: 16 }} />支付宝</div>
+          <div className='cms__menu-item' onClick={() => { authorize('github') }}><Github style={{ height: 16 }} />github</div>
+          <div className='cms__menu-item disabled' onClick={() => {
             // authorize('weibo')
-          }}><Weibo style={{ height: 16 }} />新浪微博</MenuItem>
-        </Menu>}
+          }}><Weibo style={{ height: 16 }} />新浪微博</div>
+        </div>}
         animation="slide-up"
         onVisibleChange={() => {
 
         }}
       >
-        <Login>登录</Login>
+        <div className='cms__login-btn'>登录</div>
       </Dropdown>
     }
+    {showLogin && (
+      <div className="cms__mask">
+        <div className="cms__login-modal">
+          <div className="modal-content">
+            <span style={{ position: 'absolute', top: 5, right: 5, color: '#333', fontSize: 12, cursor: 'pointer' }} onClick={() => setShowLogin(false)}>关闭</span>
+            <div className="tab-header">
+              <button className="tab-btn active" onClick={() => switchTab('login')} >登录</button>
+              <button className="tab-btn" onClick={() => switchTab('register')} >注册</button>
+            </div>
+
+            <form id="authForm">
+              <div className="input-group">
+                <label htmlFor="account">账号 / 邮箱</label>
+                <input type="text" id="account" name="account" placeholder="请输入账号或邮箱" required />
+              </div>
+
+              <div id="emailGroup" className="input-group hidden">
+                <label htmlFor="email">邮箱</label>
+                <input type="email" id="email" placeholder="请输入有效邮箱" />
+              </div>
+
+              <div className="input-group">
+                <label htmlFor="password">密码</label>
+                <input type="password" id="password" placeholder="请输入密码" required />
+              </div>
+
+              <div className="input-group hidden">
+                <label htmlFor="verifyGroup">验证码</label>
+                <input type="password" id="verifyGroup" placeholder="请输入验证码" required />
+              </div>
+
+              <button id="submitBtn" className="submit-btn" onClick={(event) => {
+                handleAuth(event)
+              }}>立即登录</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    )}
   </div>
 }
 
