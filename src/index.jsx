@@ -152,9 +152,7 @@ const UserInfo = ({ afterLogin, afterLogout }) => {
           <div className='cms__menu-item' onClick={() => authorize('google')}><Google style={{ height: 15 }} />google</div>
           <div className='cms__menu-item' onClick={() => authorize('alipay')}><Alipay style={{ height: 16 }} />支付宝</div>
           <div className='cms__menu-item' onClick={() => { authorize('github') }}><Github style={{ height: 16 }} />github</div>
-          <div className='cms__menu-item disabled' onClick={() => {
-            // authorize('weibo')
-          }}><Weibo style={{ height: 16 }} />新浪微博</div>
+          <div className='cms__menu-item disabled' onClick={() => { authorize('weibo') }}><Weibo style={{ height: 16 }} />新浪微博</div>
         </div>}
         animation="slide-up"
         onVisibleChange={() => {
