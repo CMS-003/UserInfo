@@ -124,8 +124,7 @@ export const User = proxy({
       return err.message;
     }
   },
-  async register() {
-    const that = this;
+  async register(data) {
     try {
       const resp = await fetch(this.baseURL + '/gw/user/oauth/sign-up', {
         method: 'post',

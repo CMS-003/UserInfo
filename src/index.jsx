@@ -19,74 +19,99 @@ window.addEventListener('pageshow', (event) => {
     navLoading.style.display = 'none';
   }
 });
-let currentMode = 'login';
 
 // 切换 登录 / 注册 模式
 function switchTab(mode) {
-  currentMode = mode;
   const btns = document.querySelectorAll('.tab-btn');
-  const emailGroup = document.getElementById('emailGroup');
-  const verifyGroup = document.getElementById('verifyGroup');
-  const submitBtn = document.getElementById('submitBtn');
-  const accountLabel = document.querySelector('label[for="account"]');
-
   // 更新 Tab 样式
   btns[0].classList.toggle('active', mode === 'login');
   btns[1].classList.toggle('active', mode === 'register');
-
-  if (mode === 'register') {
-    emailGroup.classList.remove('hidden');
-    verifyGroup.classList.remove('hidden');
-    submitBtn.innerText = '立即注册';
-    accountLabel.innerText = '账号';
-    document.getElementById('email').required = true;
+  const loginForm = document.querySelector('#loginForm')
+  const registerForm = document.querySelector('#registerForm')
+  if (mode === 'login') {
+    loginForm.style.display = 'block'
+    registerForm.style.display = 'none'
   } else {
-    emailGroup.classList.add('hidden');
-    submitBtn.innerText = '立即登录';
-    accountLabel.innerText = '账号 / 邮箱';
-    document.getElementById('email').required = false;
+    loginForm.style.display = 'none'
+    registerForm.style.display = 'block'
   }
 }
 
 // 提交逻辑
-async function handleAuth(event, cb) {
+async function handleLogin(event, cb) {
   event.preventDefault(); // 阻止表单刷新
 
   const data = {
-    account: document.getElementById('account').value.trim(),
-    password: document.getElementById('password').value.trim(),
-    email: currentMode === 'register' ? document.getElementById('email').value.trim() : null
+    account: document.getElementById('login-account').value.trim(),
+    password: document.getElementById('login-pass').value.trim(),
   };
-  const submitBtn = document.getElementById('submitBtn');
+  const submitBtn = document.getElementById('loginBtn');
   submitBtn.disabled = true;
-  submitBtn.innerText = '发送中...';
 
   try {
-    if (currentMode === 'login') {
-      const err = await User.login({
-        type: 'account',
-        account: data.account,
-        value: data.password
-      });
-      if (err) {
-        alert(err)
-      } else {
-        cb && cb('login')
-      }
+    const err = await User.login({
+      type: /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(data.account) ? 'email' : 'account',
+      account: data.account,
+      value: data.password
+    });
+    if (err) {
+      alert(err)
     } else {
-      const success = await User.register(data);
-      if (!success) {
-        alert('注册失败')
-      } else {
-        cb && cb('register')
-      }
+      cb && cb('login')
     }
   } catch (error) {
     console.log(error)
   } finally {
     submitBtn.disabled = false;
-    submitBtn.innerText = currentMode === 'login' ? '立即登录' : '立即注册';
   }
+}
+async function handleRegister(event, cb) {
+  event.preventDefault(); // 阻止表单刷新
+
+  const data = {
+    password: document.getElementById('register-pass').value.trim(),
+    account: document.getElementById('email').value.trim(),
+    type: 'email',
+    code: document.querySelector('#verify-code').value.trim(),
+  };
+  const submitBtn = document.getElementById('registerBtn');
+  submitBtn.disabled = true;
+
+  try {
+    const success = await User.register(data);
+    if (!success) {
+      alert('注册失败')
+    } else {
+      cb && cb('register')
+    }
+  } catch (error) {
+    console.log(error)
+  } finally {
+    submitBtn.disabled = false;
+  }
+}
+
+let timer = null;
+let seconds = 0;
+function countdown() {
+  seconds = 60;
+  timer = setInterval(() => {
+    if (seconds > 0) {
+      seconds -= 1;
+      document.querySelector('#send-code').innerHTML = seconds + 's'
+    } else {
+      clearInterval(timer);
+      timer = null;
+      document.querySelector('#send-code').innerHTML = '发送'
+    }
+  }, 1000)
+}
+function sendCode(e) {
+  if (e.target.disabled) {
+    return;
+  }
+  e.target.disabled = true;
+  countdown()
 }
 
 function authorize(app) {
@@ -128,78 +153,76 @@ const UserInfo = ({ afterLogin, afterLogout }) => {
   }, [state.access_token])
   return <div style={{ display: 'flex' }}>
     {(state.isLogin && state.profile)
-      ? <Dropdown
-        trigger={['click']}
-        overlay={<div className='cms__menu'>
-          <div className='cms__menu-item'>{state.profile.nickname}</div>
-          <div className='cms__menu-item' onClick={() => {
-            if (afterLogout) {
-              afterLogout();
-            }
-            User.logout()
-          }}>退出</div>
-        </div>}
-        animation="slide-up"
-      >
-        {state.profile.avatar ? <img src={state.profile.avatar} style={{ width: 30, height: 30, borderRadius: 30, }} /> : <UserRound width={30} />}
-      </Dropdown>
-      : <Dropdown
-        trigger={['click']}
-        overlay={<div className='cms__menu'>
-          <div className='cms__menu-item cms__login-text' style={{ textAlign: 'center' }} onClick={() => setShowLogin(true)}>
-            <span>登录/注册</span>
-          </div>
-          <div className='cms__menu-item' onClick={() => authorize('google')}><Google style={{ height: 15 }} />google</div>
-          <div className='cms__menu-item' onClick={() => authorize('alipay')}><Alipay style={{ height: 16 }} />支付宝</div>
-          <div className='cms__menu-item' onClick={() => { authorize('github') }}><Github style={{ height: 16 }} />github</div>
-          <div className='cms__menu-item' onClick={() => { authorize('weibo') }}><Weibo style={{ height: 16 }} />新浪微博</div>
-        </div>}
-        animation="slide-up"
-        onVisibleChange={() => {
-
-        }}
-      >
-        <div className='cms__login-btn'>登录</div>
-      </Dropdown>
+      ? (state.profile.avatar ? <img src={state.profile.avatar} style={{ width: 30, height: 30, borderRadius: 30, }} /> : <UserRound width={30} />)
+      : <div className='cms__login-btn' onClick={() => setShowLogin(true)}>登录</div>
     }
     {showLogin && (
       <div className="cms__mask">
         <div className="cms__login-modal">
           <div className="modal-content">
-            <span style={{ position: 'absolute', top: 5, right: 5, color: '#333', fontSize: 12, cursor: 'pointer' }} onClick={() => setShowLogin(false)}>关闭</span>
+            <span style={{ position: 'absolute', top: 5, right: 5, color: '#333', fontSize: 12, cursor: 'pointer' }} onClick={() => setShowLogin(false)}>
+              <svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="36100" width="24" height="24"><path d="M572.16 512l183.466667-183.04a42.666667 42.666667 0 1 0-60.586667-60.586667L512 451.84l-183.04-183.466667a42.666667 42.666667 0 0 0-60.586667 60.586667l183.466667 183.04-183.466667 183.04a42.666667 42.666667 0 0 0 0 60.586667 42.666667 42.666667 0 0 0 60.586667 0l183.04-183.466667 183.04 183.466667a42.666667 42.666667 0 0 0 60.586667 0 42.666667 42.666667 0 0 0 0-60.586667z" p-id="36101"></path></svg>
+            </span>
             <div className="tab-header">
               <button className="tab-btn active" onClick={() => switchTab('login')} >登录</button>
               <button className="tab-btn" onClick={() => switchTab('register')} >注册</button>
             </div>
 
-            <form id="authForm">
+            <form id="loginForm">
               <div className="input-group">
-                <label htmlFor="account">账号 / 邮箱</label>
-                <input type="text" id="account" name="account" placeholder="请输入账号或邮箱" required />
+                <label htmlFor="login-account">账号 / 邮箱</label>
+                <input type="text" id="login-account" name="login-account" placeholder="请输入账号或邮箱" required />
               </div>
 
-              <div id="emailGroup" className="input-group hidden">
+              <div className="input-group">
+                <label htmlFor="login-pass">密码</label>
+                <input type="password" id="login-pass" placeholder="请输入密码" required />
+              </div>
+
+              <button id="loginBtn" className="submit-btn" onClick={(event) => {
+                handleLogin(event, () => {
+                  setShowLogin(false)
+                  afterLogin && afterLogin()
+                })
+              }}>立即登录</button>
+            </form>
+            <form id="registerForm" style={{ display: 'none' }}>
+
+              <div id="emailGroup" className="input-group">
                 <label htmlFor="email">邮箱</label>
                 <input type="email" id="email" placeholder="请输入有效邮箱" />
               </div>
 
               <div className="input-group">
-                <label htmlFor="password">密码</label>
-                <input type="password" id="password" placeholder="请输入密码" required />
+                <label htmlFor="register-pass">密码</label>
+                <input type="password" id="register-pass" placeholder="请输入密码" required />
               </div>
 
-              <div className="input-group hidden">
-                <label htmlFor="verifyGroup">验证码</label>
-                <input type="password" id="verifyGroup" placeholder="请输入验证码" required />
+              <div className="input-group">
+                <label htmlFor="verify-code">验证码</label>
+                <div style={{ display: 'flex', gap: 5 }}>
+                  <input type="text" id="verify-code" placeholder="请输入验证码" required />
+                  <button id="send-code" onClick={sendCode}>发送</button>
+                </div>
+
               </div>
 
-              <button id="submitBtn" className="submit-btn" onClick={(event) => {
-                handleAuth(event, (type) => {
-                  setShowLogin(false)
-                  afterLogin && type === 'login' && afterLogin()
+              <button id="registerBtn" className="submit-btn" onClick={(event) => {
+                handleRegister(event, () => {
+                  confirm("已注册,去登录")
+                  document.querySelector('#email').value = '';
+                  document.querySelector('#register-pass').value = '';
+                  document.querySelector('#verify-code').value = '';
+                  switchTab('login')
                 })
-              }}>立即登录</button>
+              }}>注册</button>
             </form>
+            <div className='cms__menu'>
+              <div className='cms__menu-item' onClick={() => authorize('google')}><Google style={{ height: 24 }} /></div>
+              <div className='cms__menu-item' onClick={() => authorize('alipay')}><Alipay style={{ height: 24 }} /></div>
+              <div className='cms__menu-item' onClick={() => authorize('github')}><Github style={{ height: 24 }} /></div>
+              <div className='cms__menu-item' onClick={() => authorize('weibo')}><Weibo style={{ height: 24 }} /></div>
+            </div>
           </div>
         </div>
       </div>

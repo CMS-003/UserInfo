@@ -7,10 +7,6 @@
   "types": "src/index.d.ts",
   "scripts": {},
   "dependencies": {
-    "@linaria/core": "^7.0.0",
-    "@linaria/react": "^7.0.1",
-    "@wyw-in-js/vite": "^1.1.0",
-    "rc-dropdown": "^4.2.1",
     "react": "^19",
     "react-dom": "^19",
     "valtio": "^2.3.2",

@@ -8,18 +8,20 @@
   margin-top: 8px;
   background-color: white;
   border-radius: 4px;
-  box-shadow: grey 0px 0px 3px;
+  display: flex;
+  justify-content: center;
 }
 
 .cms__menu-item {
   line-height: 1.5;
   font-size: 12px;
-  padding: 8px 16px;
+  padding: 8px;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
   gap: 5px;
   justify-content: flex-start;
+  flex: 0;
 }
 
 .cms__menu-item:hover {
@@ -81,8 +83,7 @@
 .modal-content {
   position: relative;
   background: #ffffff;
-  width: 100%;
-  max-width: 400px;
+  width: 300px;
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
@@ -91,7 +92,7 @@
 
 .tab-header {
   display: flex;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -113,7 +114,7 @@
 }
 
 .input-group {
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.5rem;
 }
 
 .input-group label {
@@ -133,7 +134,7 @@
 
 .submit-btn {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.5rem;
   background-color: var(--primary-color);
   color: white;
   border: none;
@@ -141,6 +142,7 @@
   font-size: 1rem;
   cursor: pointer;
   transition: fadeIn 0.2s;
+  margin-top: 1rem;
 }
 
 .submit-btn:hover {
@@ -161,4 +163,15 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+#verify-code {
+  flex: 1;
+}
+
+#send-code {
+  border: none;
+  color: #444;
+  border-radius: 5px;
+  padding: 0 10px;
 }
