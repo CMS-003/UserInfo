@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
-import Dropdown from 'rc-dropdown';
 import { useSnapshot } from 'valtio';
 import { User } from './user'
-import 'rc-dropdown/assets/index.css';
 import './index.css'
 import UserRound from './asserts/user-round.svg?react';
 import Github from './asserts/github.svg?react';
